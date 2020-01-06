@@ -140,21 +140,46 @@ public class CurrentAccountServiceImpl implements ICurrentAccountService {
   @Override
   public Mono<CurrentAccount> saveMovement(Movement movement) {
     return repoCurrentAccount.findBynumAccount(movement.getNumAccount())
-        .flatMap(currentAccount -> {
 
-          movement.setCreatedAt(new Date());
-          return repoMovement.save(movement)
-              .flatMap(s -> {
-                if (movement.getTypeMovement().trim().toLowerCase().equals("deposito")) {
-                  currentAccount.setUpdatedAt(new Date());
-                  currentAccount.setCurrentBalance(currentAccount.getCurrentBalance() + movement.getBalanceTransaction());
+        .flatMap(currentAccount -> {
+          double comi = 0.0;
+
+          if (movement.getTypeMovement().equalsIgnoreCase("retiro") && currentAccount.getCurrentBalance() > movement.getBalanceTransaction() ) {
+
+            if (currentAccount.getCantTransactions() > 5) {
+              movement.setCommission(movement.getBalanceTransaction() * 0.1);
+            } else {
+              movement.setCommission(comi);
+            }
+
+            movement.setCreatedAt(new Date());
+
+            return repoMovement.save(movement)
+                .flatMap(m -> {
+                  currentAccount.setCantTransactions(currentAccount.getCantTransactions() + 1);
+                  currentAccount.setCurrentBalance(currentAccount.getCurrentBalance() - movement.getBalanceTransaction() - movement.getCommission());
                   return repoCurrentAccount.save(currentAccount);
-                } else if (movement.getTypeMovement().trim().toLowerCase().equals("retiro")) {
-                  currentAccount.setCurrentBalance(currentAccount.getCurrentBalance() - movement.getBalanceTransaction());
+                });
+
+          } else if (movement.getTypeMovement().equalsIgnoreCase("deposito")) {
+
+            if (currentAccount.getCantTransactions() > 5) {
+              movement.setCommission(movement.getBalanceTransaction() * 0.1);
+            } else {
+              movement.setCommission(comi);
+            }
+            movement.setCreatedAt(new Date());
+
+            return repoMovement.save(movement).
+                flatMap(m -> {
+                  currentAccount.setCantTransactions(currentAccount.getCantTransactions() + 1);
+                  currentAccount.setCurrentBalance(currentAccount.getCurrentBalance() + movement.getBalanceTransaction() - movement.getCommission());
                   return repoCurrentAccount.save(currentAccount);
-                }
-                return Mono.just(currentAccount);
-              });
+                });
+          }else{
+            return Mono.empty();
+          }
+
         });
   }
 
