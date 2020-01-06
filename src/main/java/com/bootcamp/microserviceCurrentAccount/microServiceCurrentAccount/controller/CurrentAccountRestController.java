@@ -23,118 +23,118 @@ import java.util.Map;
 @RequestMapping("/currentAccount")
 public class CurrentAccountRestController {
 
-    @Autowired
-    private ICurrentAccountService currentAccountService;
-    @Autowired
-    private ConvertCurrentAccount convertCurrentAccount;
+  @Autowired
+  private ICurrentAccountService currentAccountService;
+  @Autowired
+  private ConvertCurrentAccount convertCurrentAccount;
 
-    @GetMapping
-    public Mono<ResponseEntity<Flux<CurrentAccount>>> findAllAccount() {
-        return Mono.just(ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(currentAccountService.findAll()))
-                .defaultIfEmpty(ResponseEntity.notFound().build());
-    }
+  @GetMapping
+  public Mono<ResponseEntity<Flux<CurrentAccount>>> findAllAccount() {
+    return Mono.just(ResponseEntity.ok()
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(currentAccountService.findAll()))
+        .defaultIfEmpty(ResponseEntity.notFound().build());
+  }
 
-    @GetMapping("/{id}")
-    public Mono<ResponseEntity<CurrentAccount>> findByID(@PathVariable String id) {
-        return currentAccountService.findById(id)
-                .map(savingAccount -> ResponseEntity.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(savingAccount))
-                .defaultIfEmpty(ResponseEntity.notFound().build());
-    }
+  @GetMapping("/{id}")
+  public Mono<ResponseEntity<CurrentAccount>> findByID(@PathVariable String id) {
+    return currentAccountService.findById(id)
+        .map(savingAccount -> ResponseEntity.ok()
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(savingAccount))
+        .defaultIfEmpty(ResponseEntity.notFound().build());
+  }
 
-    @GetMapping("/numAccount/{numAccount}")
-    public Mono<ResponseEntity<CurrentAccount>> findByNumAccout(@PathVariable String numAccount) {
-        return currentAccountService.findByNumAccount(numAccount)
-                .map(savingAccount -> ResponseEntity.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(savingAccount))
-                .defaultIfEmpty(ResponseEntity.notFound().build());
-    }
+  @GetMapping("/numAccount/{numAccount}")
+  public Mono<ResponseEntity<CurrentAccount>> findByNumAccout(@PathVariable String numAccount) {
+    return currentAccountService.findByNumAccount(numAccount)
+        .map(savingAccount -> ResponseEntity.ok()
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(savingAccount))
+        .defaultIfEmpty(ResponseEntity.notFound().build());
+  }
 
-    @PostMapping
-    public Mono<ResponseEntity<Map<String, Object>>> saveCurrentAccount(@RequestBody Mono<CurrentAccountDtoPerson> currentAccountDtoPersonMono) {
+  @GetMapping("/nomBank/{nomBank}")
+  public Mono<ResponseEntity<Flux<CurrentAccount>>> findByNomBank(@PathVariable String nomBank) {
+    return Mono.just(ResponseEntity.ok()
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(currentAccountService.findByNomBank(nomBank)))
+        .defaultIfEmpty(ResponseEntity.notFound().build());
+  }
 
-        Map<String, Object> respuesta = new HashMap<>();
-
-        return currentAccountDtoPersonMono.flatMap(savingAccount -> {
-            return currentAccountService.saveCurrentAccount(savingAccount)
-                    .map(p -> {
-                        respuesta.put("CurrentAccountDtoPerson :", savingAccount);
-                        return ResponseEntity
-                                .created(URI.create("/currentAccount"))
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .body(respuesta);
-                    });
-        }).onErrorResume(throwable -> {
-            return Mono.just(throwable).cast(WebExchangeBindException.class)
-                    .flatMap(e -> Mono.just(e.getFieldErrors()))
-                    .flatMapMany(Flux::fromIterable)
-                    .map(fieldError -> "El campo" + fieldError.getField() + " " + fieldError.getDefaultMessage())
-                    .collectList()
-                    .flatMap(list -> {
-                        respuesta.put("Errors : ", list);
-                        respuesta.put("timestamp : ", new Date());
-                        respuesta.put("status", HttpStatus.BAD_REQUEST.value());
-                        return Mono.just(ResponseEntity.badRequest().body(respuesta));
-                    });
+  @PostMapping("/onPerson/{numDoc}")
+  public Mono<ResponseEntity<CurrentAccount>> saveOnPerson(@RequestBody CurrentAccount currentAccount, @PathVariable String numDoc) {
+    return Mono.just(currentAccount)
+        .flatMap(savingAccountMono1 -> {
+          return currentAccountService.saveAccountOnPerson(currentAccount, numDoc)
+              .map(s -> ResponseEntity.created(URI.create("/currentAccount"))
+                  .contentType(MediaType.APPLICATION_JSON).body(s));
         });
-    }
+  }
 
-    @PutMapping("/{id}")
-    public Mono<ResponseEntity<CurrentAccount>> updateSavingAccount(@RequestBody CurrentAccount currentAccount, @PathVariable String id) {
-        return currentAccountService.findById(id)
-                .flatMap(s -> {
-                    s.setNumAccount(currentAccount.getNumAccount());
-                    s.setNomAccount(currentAccount.getNomAccount());
-                    s.setTypeAccount(currentAccount.getTypeAccount());
-                    s.setCurrentBalance(currentAccount.getCurrentBalance());
-                    s.setStatus(currentAccount.getStatus());
-                    s.setCreatedAt(currentAccount.getCreatedAt());
-                    s.setUpdatedAt(currentAccount.getUpdatedAt());
-                    return currentAccountService.updateAccount(s);
-                }).map(account -> ResponseEntity
-                        .created(URI.create("/currentAccount".concat(account.getId())))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(account))
-                .defaultIfEmpty(ResponseEntity.notFound().build());
-    }
+  @PostMapping
+  public Mono<ResponseEntity<CurrentAccountDtoPerson>> saveCurrentAccount(@RequestBody CurrentAccountDtoPerson currentAccountDtoPerson) {
 
-    @DeleteMapping("/{id}")
-    public Mono<ResponseEntity<Void>> deleteSavingAccount(@PathVariable String id) {
-        return currentAccountService.findById(id)
-                .flatMap(savingAccount -> {
-                    return currentAccountService.delete(savingAccount)
-                            .then(Mono.just(new ResponseEntity<Void>(HttpStatus.NO_CONTENT)));
-                }).defaultIfEmpty(new ResponseEntity<Void>(HttpStatus.NOT_FOUND));
-    }
+    return Mono.just(currentAccountDtoPerson)
+        .flatMap(savingAccountDtoMono -> {
+          return currentAccountService.saveCurrentAccount(currentAccountDtoPerson)
+              .map(s -> ResponseEntity.created(URI.create("/currentAccount"))
+                  .contentType(MediaType.APPLICATION_JSON).body(s));
+        });
+  }
 
-    @PostMapping("/movements")
-    public Mono<ResponseEntity<CurrentAccount>> movimiento2(@RequestBody Movement movement) {
-        return currentAccountService.saveMovement(movement)
-                .map(savingAccount -> ResponseEntity.ok()
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .body(savingAccount))
-                .defaultIfEmpty(ResponseEntity.notFound().build());
-    }
+  @PutMapping("/{id}")
+  public Mono<ResponseEntity<CurrentAccount>> updateSavingAccount(@RequestBody CurrentAccount currentAccount, @PathVariable String id) {
+    return currentAccountService.findById(id)
+        .flatMap(s -> {
+          s.setNumAccount(currentAccount.getNumAccount());
+          s.setNomAccount(currentAccount.getNomAccount());
+          s.setTypeAccount(currentAccount.getTypeAccount());
+          s.setCurrentBalance(currentAccount.getCurrentBalance());
+          s.setStatus(currentAccount.getStatus());
+          s.setCreatedAt(currentAccount.getCreatedAt());
+          s.setUpdatedAt(currentAccount.getUpdatedAt());
+          return currentAccountService.updateAccount(s);
+        }).map(account -> ResponseEntity
+            .created(URI.create("/currentAccount".concat(account.getId())))
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(account))
+        .defaultIfEmpty(ResponseEntity.notFound().build());
+  }
 
-    @GetMapping("/movements")
-    public Mono<ResponseEntity<Flux<Movement>>> findAllMovement(){
-        return Mono.just(ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(currentAccountService.findAllMovement()))
-                .defaultIfEmpty(ResponseEntity.notFound().build());
-    }
+  @DeleteMapping("/{id}")
+  public Mono<ResponseEntity<Void>> deleteSavingAccount(@PathVariable String id) {
+    return currentAccountService.findById(id)
+        .flatMap(savingAccount -> {
+          return currentAccountService.delete(savingAccount)
+              .then(Mono.just(new ResponseEntity<Void>(HttpStatus.NO_CONTENT)));
+        }).defaultIfEmpty(new ResponseEntity<Void>(HttpStatus.NOT_FOUND));
+  }
 
-    @GetMapping("/movements/{numAccount}")
-    public Mono<ResponseEntity<Flux<Movement>>> findMovByNumAccount(@PathVariable String numAccount){
-        return Mono.just(ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(currentAccountService.findMovByNumAccount(numAccount)))
-                .defaultIfEmpty(ResponseEntity.notFound().build());
-    }
+  @PostMapping("/saveMov")
+  public Mono<ResponseEntity<CurrentAccount>> saveMov(@RequestBody Movement movement) {
+    return currentAccountService.saveMovement(movement)
+        .map(savingAccount -> ResponseEntity.ok()
+            .contentType(MediaType.APPLICATION_JSON)
+            .body(savingAccount))
+        .defaultIfEmpty(ResponseEntity.notFound().build());
+  }
+
+  @GetMapping("/movements")
+  public Mono<ResponseEntity<Flux<Movement>>> findAllMovement() {
+    return Mono.just(ResponseEntity.ok()
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(currentAccountService.findAllMovement()))
+        .defaultIfEmpty(ResponseEntity.notFound().build());
+  }
+
+  @GetMapping("/movements/{numAccount}")
+  public Mono<ResponseEntity<Flux<Movement>>> findMovByNumAccount(@PathVariable String numAccount) {
+    return Mono.just(ResponseEntity.ok()
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(currentAccountService.findMovByNumAccount(numAccount)))
+        .defaultIfEmpty(ResponseEntity.notFound().build());
+  }
 
 
 }

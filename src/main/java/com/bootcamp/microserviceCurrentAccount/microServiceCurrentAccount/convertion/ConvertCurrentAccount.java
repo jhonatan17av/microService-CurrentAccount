@@ -22,6 +22,7 @@ public class ConvertCurrentAccount {
 	
 	public CurrentAccount toCurrentAccount(CurrentAccountDtoPerson dto) {
 		CurrentAccount currentAccount = new CurrentAccount();
+		currentAccount.setNomBank(dto.getNomBank());
 		currentAccount.setNumAccount(dto.getNumAccount());
 		currentAccount.setNomAccount(dto.getNomAccount());
 		currentAccount.setTypeAccount(dto.getTypeAccount());
@@ -29,6 +30,7 @@ public class ConvertCurrentAccount {
 		currentAccount.setStatus(dto.getStatus());
 		currentAccount.setCreatedAt(dto.getCreatedAt());
 		currentAccount.setUpdatedAt(dto.getUpdatedAt());
+		currentAccount.setCantTransactions(dto.getCantTransactions());
 		return currentAccount;
 	}
 

@@ -21,29 +21,29 @@ import java.util.Date;
 @SpringBootApplication
 public class MicroServiceCurrentAccountApplication implements CommandLineRunner {
 
-	@Autowired
-	private CurrentAccountRepository currentAccountService;
-	@Autowired
-	private MovementRespository movementRespository;
-	@Autowired
-	private ReactiveMongoTemplate mongoTemplate;
-	private static final Logger log = LoggerFactory.getLogger(MicroServiceCurrentAccountApplication.class);
+  @Autowired
+  private CurrentAccountRepository currentAccountService;
+  @Autowired
+  private MovementRespository movementRespository;
+  @Autowired
+  private ReactiveMongoTemplate mongoTemplate;
+  private static final Logger log =
+			LoggerFactory.getLogger(MicroServiceCurrentAccountApplication.class);
 
-	public static void main(String[] args) {
-		SpringApplication.run(MicroServiceCurrentAccountApplication.class, args);
-	}
+  public static void main(String[] args) {
+    SpringApplication.run(MicroServiceCurrentAccountApplication.class, args);
+  }
 
-	@Override
-	public void run(String... args) throws Exception {
-		mongoTemplate.dropCollection("currentAccounts").subscribe();
-		mongoTemplate.dropCollection("movements").subscribe();
+  @Override
+  public void run(String... args) throws Exception {
+    mongoTemplate.dropCollection("currentAccounts").subscribe();
+    mongoTemplate.dropCollection("movements").subscribe();
 
-		Flux.just(new CurrentAccount("9898989898","Cuenta Corriente","Standar" ,10000.00,"Active",new Date(),new Date()))
-				.flatMap(currentAccount -> currentAccountService.save(currentAccount))
-				.subscribe(currentAccount -> log.info("SavingAccount inserted :" + currentAccount.getNumAccount()));
-
-		Flux.just(new Movement("9898989898","deposito",150.0,new Date()))
-				.flatMap(movement -> movementRespository.save(movement))
-				.subscribe(movement -> log.info("Movement inserted :" + movement.getNumAccount()));
-	}
+    Flux.just(new CurrentAccount("Scotiabank", "9898989898",
+				"Cuenta Corriente", "Standar",
+        10000.00, "Active", new Date(), new Date(), 0))
+        .flatMap(currentAccount -> currentAccountService.save(currentAccount))
+        .subscribe(currentAccount ->
+						log.info("SavingAccount inserted :" + currentAccount.getNumAccount()));
+  }
 }

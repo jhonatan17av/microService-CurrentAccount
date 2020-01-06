@@ -11,9 +11,12 @@ public interface ICurrentAccountService {
     Flux<CurrentAccount> findAll();
     Mono<CurrentAccount> findById(String id);
     Mono<CurrentAccount> findByNumAccount(String numAccount);
+    Flux<CurrentAccount> findByNomBank(String nomBank);
     Mono<CurrentAccountDtoPerson> saveCurrentAccount(CurrentAccountDtoPerson currentAccountDtoPerson);
     Mono<CurrentAccount> updateAccount(CurrentAccount currentAccount);
     Mono<Void> delete(CurrentAccount currentAccount);
+
+    Mono<CurrentAccount> saveAccountOnPerson(CurrentAccount currentAccount, String numDoc);
 
     Mono<CurrentAccount> saveMovement(Movement movement);
     Flux<Movement> findAllMovement();
